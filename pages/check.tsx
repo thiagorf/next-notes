@@ -1,22 +1,22 @@
 import { authOptions } from "./api/auth/[...nextauth]";
 import { unstable_getServerSession } from "next-auth/next";
-import { useSession, signOut } from "next-auth/react";
+import { signOut } from "next-auth/react";
+import { GetServerSideProps } from "next";
 
 function Check() {
-  const { data: session } = useSession();
-
-  if (typeof window === "undefined") return null;
   return (
     <div>
-      {session ? <p>You are logged in</p> : <p>You aren't logged in</p>}
-      <button onClick={() => signOut()}>Sign out</button>
+      <p>You are logged in</p>
+      <button onClick={() => signOut({ callbackUrl: "/" })}>Sign out</button>
     </div>
   );
 }
 
 export default Check;
 
-export async function getServerSideProps(ctx) {
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  const fullPathUrl = `${process.env.NEXTAUTH_URL}/${ctx.resolvedUrl}`;
+
   const isLoggedIn = await unstable_getServerSession(
     ctx.req,
     ctx.res,
@@ -26,7 +26,9 @@ export async function getServerSideProps(ctx) {
   if (!isLoggedIn) {
     return {
       redirect: {
-        destination: "/",
+        destination: `/auth/signin?callbackUrl=${encodeURIComponent(
+          fullPathUrl
+        )}`,
         permanent: false,
       },
     };
@@ -35,4 +37,4 @@ export async function getServerSideProps(ctx) {
   return {
     props: {},
   };
-}
+};
