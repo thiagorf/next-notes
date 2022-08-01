@@ -1,6 +1,12 @@
-import { InferGetServerSidePropsType } from "next";
+import { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import { getProviders, signIn } from "next-auth/react";
+import { useRouter } from "next/router";
 import { SubmitHandler, useForm } from "react-hook-form";
+import { toast } from "react-toastify";
+
+interface IRedirectTo {
+  callbackUrl: string;
+}
 
 interface ILogin {
   email: string;
@@ -9,6 +15,8 @@ interface ILogin {
 export default function SignIn({
   providers,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
+  const { query } = useRouter();
+
   const {
     register,
     handleSubmit,
@@ -16,7 +24,11 @@ export default function SignIn({
   } = useForm<ILogin>();
 
   const attemptSignIn: SubmitHandler<ILogin> = async (data) => {
-    signIn("email", { email: data.email });
+    signIn("email", {
+      email: data.email,
+      callbackUrl: query.callbackUrl as string,
+    });
+    toast("Check your email for a magic link");
   };
 
   return (
@@ -35,7 +47,7 @@ export default function SignIn({
   );
 }
 
-export const getServerSideProps = async () => {
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const providers = await getProviders();
 
   return {
