@@ -1,15 +1,34 @@
-import { GetServerSideProps } from "next";
+import { Note } from "@prisma/client";
+import {
+  GetServerSideProps,
+  InferGetServerSidePropsType,
+  Redirect,
+} from "next";
 import { unstable_getServerSession } from "next-auth";
 import prisma from "../lib/prisma";
+import getServerRedirectUrl from "../lib/redirect";
 import { authOptions } from "./api/auth/[...nextauth]";
 
-function Notes() {
-  return <div>{JSON.stringify("asasas", null, 2)}</div>;
+interface INotes {
+  notes: {
+    id: string;
+    name: string;
+    email: string;
+    note: Note[];
+  };
+}
+
+function Notes({
+  notes,
+}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+  return <div>{JSON.stringify(notes, null, 2)}</div>;
 }
 
 export default Notes;
 
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
+export const getServerSideProps: GetServerSideProps<INotes> = async (ctx) => {
+  const redirect = getServerRedirectUrl(ctx);
+
   const session = await unstable_getServerSession(
     ctx.req,
     ctx.res,
@@ -18,7 +37,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 
   if (!session) {
     return {
-      props: {},
+      redirect,
     };
   }
 
@@ -26,5 +45,15 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     where: {
       email: session.user.email,
     },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      note: true,
+    },
   });
+
+  return {
+    props: { notes },
+  };
 };
