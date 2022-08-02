@@ -26,6 +26,7 @@ export const authOptions: NextAuthOptions = {
   ],
   pages: {
     signIn: "/auth/sigin",
+    verifyRequest: "/auth/verify",
   },
   session: {
     strategy: "database",

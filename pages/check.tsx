@@ -15,8 +15,8 @@ function Check() {
 export default Check;
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const fullPathUrl = `${process.env.NEXTAUTH_URL}/${ctx.resolvedUrl}`;
-
+  const fullPathUrl = `${process.env.NEXTAUTH_URL}${ctx.resolvedUrl}`;
+  console.log(fullPathUrl);
   const isLoggedIn = await unstable_getServerSession(
     ctx.req,
     ctx.res,

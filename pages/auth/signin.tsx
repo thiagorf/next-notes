@@ -3,6 +3,7 @@ import { getProviders, signIn } from "next-auth/react";
 import { useRouter } from "next/router";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
+import { AiOutlineInfoCircle } from "react-icons/ai";
 
 interface IRedirectTo {
   callbackUrl: string;
@@ -28,8 +29,32 @@ export default function SignIn({
       email: data.email,
       callbackUrl: query.callbackUrl as string,
     });
-    toast("Check your email for a magic link");
+    toast("Wait a moment", {
+      position: toast.POSITION.TOP_CENTER,
+      autoClose: 5000,
+      progressClassName: "bg-orange-500",
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+    });
   };
+
+  if (query.callbackUrl) {
+    toast.info("You should login first", {
+      toastId: "notduplicatedtoast",
+      position: toast.POSITION.TOP_CENTER,
+      autoClose: 5000,
+      icon: () => <AiOutlineInfoCircle className="text-orange-500 font-md" />,
+      progressClassName: "!bg-orange-500",
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+    });
+  }
 
   return (
     <div>
@@ -49,7 +74,6 @@ export default function SignIn({
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const providers = await getProviders();
-
   return {
     props: {
       providers,
