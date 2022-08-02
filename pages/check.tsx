@@ -2,6 +2,7 @@ import { authOptions } from "./api/auth/[...nextauth]";
 import { unstable_getServerSession } from "next-auth/next";
 import { signOut } from "next-auth/react";
 import { GetServerSideProps } from "next";
+import getServerRedirectUrl from "../lib/redirect";
 
 function Check() {
   return (
@@ -15,8 +16,8 @@ function Check() {
 export default Check;
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const fullPathUrl = `${process.env.NEXTAUTH_URL}${ctx.resolvedUrl}`;
-  console.log(fullPathUrl);
+  const redirect = getServerRedirectUrl(ctx);
+
   const isLoggedIn = await unstable_getServerSession(
     ctx.req,
     ctx.res,
@@ -25,12 +26,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 
   if (!isLoggedIn) {
     return {
-      redirect: {
-        destination: `/auth/signin?callbackUrl=${encodeURIComponent(
-          fullPathUrl
-        )}`,
-        permanent: false,
-      },
+      redirect,
     };
   }
 
