@@ -1,5 +1,5 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
+import GitHubProvider from "next-auth/providers/github";
 import EmailProvider from "next-auth/providers/email";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import prisma from "../../../lib/prisma";
@@ -7,10 +7,16 @@ import prisma from "../../../lib/prisma";
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    GitHubProvider({
+      clientId: process.env.GITHUB_CLIENT_ID,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET,
     }),
+    EmailProvider({
+      server: process.env.EMAIL_ETHEREAL,
+      from: process.env.EMAIL_FROM,
+      maxAge: 60 * 5,
+    }),
+    /*
     EmailProvider({
       server: {
         host: process.env.EMAIL_SERVER_HOST,
@@ -23,13 +29,15 @@ export const authOptions: NextAuthOptions = {
       from: process.env.EMAIL_FROM,
       maxAge: 60 * 5,
     }),
+    */
   ],
   pages: {
-    signIn: "/auth/sigin",
+    signIn: "/auth/signin",
     verifyRequest: "/auth/verify",
+    error: "/auth/signin",
   },
   session: {
-    strategy: "database",
+    strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60,
     updateAge: 24 * 60 * 60,
   },

@@ -1,6 +1,6 @@
 import { authOptions } from "./api/auth/[...nextauth]";
 import { unstable_getServerSession } from "next-auth/next";
-import { signOut } from "next-auth/react";
+import { getSession, signOut } from "next-auth/react";
 import { GetServerSideProps } from "next";
 import getServerRedirectUrl from "../lib/redirect";
 
@@ -16,6 +16,8 @@ function Check() {
 export default Check;
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  const session = await getSession();
+  console.log(session);
   const redirect = getServerRedirectUrl(ctx);
 
   const isLoggedIn = await unstable_getServerSession(
@@ -23,6 +25,8 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     ctx.res,
     authOptions
   );
+
+  console.log(isLoggedIn);
 
   if (!isLoggedIn) {
     return {
