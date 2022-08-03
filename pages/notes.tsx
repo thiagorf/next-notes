@@ -1,9 +1,5 @@
 import { Note } from "@prisma/client";
-import {
-  GetServerSideProps,
-  InferGetServerSidePropsType,
-  Redirect,
-} from "next";
+import { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import { unstable_getServerSession } from "next-auth";
 import prisma from "../lib/prisma";
 import getServerRedirectUrl from "../lib/redirect";
@@ -21,7 +17,19 @@ interface INotes {
 function Notes({
   notes,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
-  return <div>{JSON.stringify(notes, null, 2)}</div>;
+  return (
+    <div>
+      <div>
+        <button>Create a note</button>
+      </div>
+      {notes.note.length === 0 && (
+        <div>
+          <p>You don't have any notes right now!</p>
+        </div>
+      )}
+      <div>{JSON.stringify(notes, null, 2)}</div>
+    </div>
+  );
 }
 
 export default Notes;
