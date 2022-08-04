@@ -17,6 +17,15 @@ interface INotes {
   };
 }
 
+interface IRealNotes {
+  notes: {
+    id: string;
+    title: string;
+    slug: string;
+    content: string;
+  }[];
+}
+
 function Notes({
   notes,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
@@ -32,7 +41,7 @@ function Notes({
           Content={CreateNoteModal}
         />
       </div>
-      {notes.note.length === 0 && (
+      {notes.length === 0 && (
         <div>
           <p>You don't have any notes right now!</p>
         </div>
@@ -44,7 +53,9 @@ function Notes({
 
 export default Notes;
 
-export const getServerSideProps: GetServerSideProps<INotes> = async (ctx) => {
+export const getServerSideProps: GetServerSideProps<IRealNotes> = async (
+  ctx
+) => {
   const redirect = getServerRedirectUrl(ctx);
 
   const session = await unstable_getServerSession(
@@ -59,15 +70,20 @@ export const getServerSideProps: GetServerSideProps<INotes> = async (ctx) => {
     };
   }
 
-  const notes = await prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: {
       email: session.user.email,
     },
+  });
+  const notes = await prisma.note.findMany({
+    where: {
+      user_id: user.id,
+    },
     select: {
       id: true,
-      name: true,
-      email: true,
-      note: true,
+      title: true,
+      slug: true,
+      content: true,
     },
   });
 
