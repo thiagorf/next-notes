@@ -1,6 +1,6 @@
 import { ComponentType, useEffect, useState } from "react";
 import ReactDOM from "react-dom";
-import { AiFillCloseCircle, AiOutlineClose } from "react-icons/ai";
+import { AiOutlineClose } from "react-icons/ai";
 
 export const Modal = ({
   show,
