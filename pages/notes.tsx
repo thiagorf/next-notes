@@ -3,6 +3,7 @@ import { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import { unstable_getServerSession } from "next-auth";
 import { useState } from "react";
 import { Modal } from "../components/modal";
+import { CreateNoteModal } from "../components/modal/create-note-modal";
 import prisma from "../lib/prisma";
 import getServerRedirectUrl from "../lib/redirect";
 import { authOptions } from "./api/auth/[...nextauth]";
@@ -25,7 +26,11 @@ function Notes({
     <div>
       <div>
         <button onClick={() => setShow(true)}>Create a note</button>
-        <Modal show={show} onClose={() => setShow(false)} />
+        <Modal
+          show={show}
+          onClose={() => setShow(false)}
+          Content={CreateNoteModal}
+        />
       </div>
       {notes.note.length === 0 && (
         <div>

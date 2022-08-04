@@ -1,12 +1,14 @@
-import { useEffect, useState } from "react";
+import { ComponentType, useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 
 export const Modal = ({
   show,
   onClose,
+  Content,
 }: {
   show: boolean;
   onClose: () => void;
+  Content: ComponentType;
 }) => {
   const [isBrowser, setIsBrowser] = useState(false);
 
@@ -20,8 +22,8 @@ export const Modal = ({
 
   const modalContent = show ? (
     <div>
-      <p>Test Modal</p>
       <button onClick={handleCloseModal}>Close</button>
+      <Content />
     </div>
   ) : null;
 
