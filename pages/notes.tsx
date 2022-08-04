@@ -1,6 +1,8 @@
 import { Note } from "@prisma/client";
 import { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import { unstable_getServerSession } from "next-auth";
+import { useState } from "react";
+import { Modal } from "../components/modal";
 import prisma from "../lib/prisma";
 import getServerRedirectUrl from "../lib/redirect";
 import { authOptions } from "./api/auth/[...nextauth]";
@@ -17,10 +19,13 @@ interface INotes {
 function Notes({
   notes,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
+  const [show, setShow] = useState(false);
+
   return (
     <div>
       <div>
-        <button>Create a note</button>
+        <button onClick={() => setShow(true)}>Create a note</button>
+        <Modal show={show} onClose={() => setShow(false)} />
       </div>
       {notes.note.length === 0 && (
         <div>

@@ -1,9 +1,9 @@
-import { GetServerSideProps, InferGetServerSidePropsType } from "next";
-import { getProviders, getSession, signIn, signOut } from "next-auth/react";
-import { useRouter } from "next/router";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { toast } from "react-toastify";
 import { AiOutlineInfoCircle } from "react-icons/ai";
+import { signIn, signOut } from "next-auth/react";
+import { useRouter } from "next/router";
+import { toast } from "react-toastify";
+import { GetServerSideProps } from "next";
 import { unstable_getServerSession } from "next-auth";
 import { authOptions } from "../api/auth/[...nextauth]";
 
@@ -11,9 +11,7 @@ interface ILogin {
   email: string;
 }
 
-export default function SignIn({
-  providers,
-}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+export default function SignIn() {
   const { query } = useRouter();
 
   const {
@@ -39,6 +37,9 @@ export default function SignIn({
     });
   };
 
+  /*
+    TODO don't show toast on sign in error
+  */
   if (query.callbackUrl) {
     toast.info("You should login first", {
       toastId: "notduplicatedtoast",
@@ -76,29 +77,28 @@ export default function SignIn({
         >
           Sign in with Github
         </button>
-        <button onClick={() => signOut({ redirect: true, callbackUrl: "/" })}>
-          logout
-        </button>
       </div>
     </div>
   );
 }
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const providers = await getProviders();
-
-  const session2 = await getSession();
-  console.log("session2: ", session2);
   const session = await unstable_getServerSession(
     ctx.req,
     ctx.res,
     authOptions
   );
-  console.log("session: ", session);
+
+  if (session) {
+    return {
+      redirect: {
+        destination: ctx.resolvedUrl,
+        permanent: true,
+      },
+    };
+  }
 
   return {
-    props: {
-      providers,
-    },
+    props: {},
   };
 };
