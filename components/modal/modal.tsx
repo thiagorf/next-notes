@@ -1,5 +1,6 @@
 import { ComponentType, useEffect, useState } from "react";
 import ReactDOM from "react-dom";
+import { AiFillCloseCircle, AiOutlineClose } from "react-icons/ai";
 
 export const Modal = ({
   show,
@@ -21,9 +22,13 @@ export const Modal = ({
   }, []);
 
   const modalContent = show ? (
-    <div>
-      <button onClick={handleCloseModal}>Close</button>
-      <Content />
+    <div className="flex justify-center items-center w-full min-h-screen bg-transparent backdrop-blur-[1.5px] absolute top-0 left-0 z-10">
+      <button onClick={handleCloseModal} className="fixed top-5 right-5">
+        <AiOutlineClose className="text-3xl" />
+      </button>
+      <div className="w-fit h-fit">
+        <Content />
+      </div>
     </div>
   ) : null;
 
