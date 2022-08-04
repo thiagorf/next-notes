@@ -1,5 +1,9 @@
+import { Note } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { SubmitHandler, useForm } from "react-hook-form";
+import { toast } from "react-toastify";
+import api from "../../lib/api";
+import { ApiResponse } from "../../types";
 
 interface ICreateNotes {
   title: string;
@@ -16,10 +20,12 @@ export const CreateNoteModal = () => {
     data: { user },
   } = useSession();
 
-  const attemptCreateNote: SubmitHandler<ICreateNotes> = (data) => {
-    console.log(data);
-    const requiredData = { ...data, email: user.email };
-    console.log(requiredData);
+  const attemptCreateNote: SubmitHandler<ICreateNotes> = async (data) => {
+    const response = await api.post<ApiResponse<Note>>("/api/notes", data);
+
+    toast(response.data.message, {
+      position: toast.POSITION.TOP_CENTER,
+    });
   };
 
   return (
