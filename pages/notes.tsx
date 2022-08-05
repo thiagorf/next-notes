@@ -45,7 +45,7 @@ function Notes({
       ) : (
         <div className="grid grid-cols-3 p-2">
           {notes.map((note) => (
-            <NoteContent {...note} />
+            <NoteContent {...note} key={note.id} />
           ))}
         </div>
       )}

@@ -1,7 +1,8 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import prisma from "../../lib/prisma";
-import { getNotes } from "../../services/notes";
+import { getNote, getNotes } from "../../services/notes";
 import { getToken } from "next-auth/jwt";
+import prisma from "../../lib/prisma";
+import slugfy from "../../services/slugfy";
 
 export default async function handle(
   req: NextApiRequest,
@@ -24,10 +25,12 @@ export default async function handle(
       content: string;
     } = req.body;
 
+    const slug = slugfy(body.title);
+
     const result = await prisma.note.create({
       data: {
         ...body,
-        slug: body.title,
+        slug,
         user_id: token.sub,
       },
     });
@@ -39,8 +42,20 @@ export default async function handle(
   }
 
   if (req.method === "GET") {
+    if ("slug" in req.query) {
+      const note = await getNote(req.body.slug);
+
+      return res.status(200).json({
+        data: note,
+        message: "",
+      });
+    }
+
     const notes = await getNotes(token.sub);
 
-    return res.status(200).json(notes);
+    return res.status(200).json({
+      data: notes,
+      message: "",
+    });
   }
 }
