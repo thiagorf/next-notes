@@ -22,3 +22,19 @@ export const getNotes = async (user_id: string) => {
 
   return notes;
 };
+
+export const getNote = async (slug: string) => {
+  const note = await prisma.note.findUnique({
+    where: {
+      slug,
+    },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      content: true,
+    },
+  });
+
+  return note;
+};
