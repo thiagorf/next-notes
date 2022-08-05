@@ -15,7 +15,7 @@ export const Footer = () => {
   return (
     <footer className="flex flex-col items-center justify-center h-36  border -mt-36">
       <p className="mb-2">
-        Make with <AiFillHeart className="inline text-red-500" /> by thiagorf
+        Made with <AiFillHeart className="inline text-red-500" /> by thiagorf
       </p>
       <div>
         <p className="text-sm">Developer Social networks</p>
