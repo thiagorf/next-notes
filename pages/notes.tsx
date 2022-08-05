@@ -1,21 +1,12 @@
-import { Note } from "@prisma/client";
-import { GetServerSideProps, InferGetServerSidePropsType } from "next";
-import { unstable_getServerSession } from "next-auth";
-import { useState } from "react";
-import { Modal } from "../components/modal";
 import { CreateNoteModal } from "../components/modal/create-note-modal";
-import prisma from "../lib/prisma";
+import { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import getServerRedirectUrl from "../lib/redirect";
-import { authOptions } from "./api/auth/[...nextauth]";
-
-interface INotes {
-  notes: {
-    id: string;
-    name: string;
-    email: string;
-    note: Note[];
-  };
-}
+import { getNotes } from "../services/notes";
+import { Modal } from "../components/modal";
+import { getToken } from "next-auth/jwt";
+import { useState } from "react";
+import { AiOutlinePlus } from "react-icons/ai";
+import { NoteContent } from "../components/note-content";
 
 interface IRealNotes {
   notes: {
@@ -33,20 +24,31 @@ function Notes({
 
   return (
     <div>
-      <div>
-        <button onClick={() => setShow(true)}>Create a note</button>
+      <div className="p-2">
+        <button
+          onClick={() => setShow(true)}
+          className="border border-gray-500 p-2 w-48 rounded-full flex justify-center items-center gap-1"
+        >
+          <span>Create a note</span>
+          <AiOutlinePlus />
+        </button>
         <Modal
           show={show}
           onClose={() => setShow(false)}
           Content={CreateNoteModal}
         />
       </div>
-      {notes.length === 0 && (
+      {notes.length === 0 ? (
         <div>
           <p>You don't have any notes right now!</p>
         </div>
+      ) : (
+        <div className="grid grid-cols-3 p-2">
+          {notes.map((note) => (
+            <NoteContent {...note} />
+          ))}
+        </div>
       )}
-      <div>{JSON.stringify(notes, null, 2)}</div>
     </div>
   );
 }
@@ -56,36 +58,16 @@ export default Notes;
 export const getServerSideProps: GetServerSideProps<IRealNotes> = async (
   ctx
 ) => {
-  const redirect = getServerRedirectUrl(ctx);
+  const token = await getToken({ req: ctx.req });
 
-  const session = await unstable_getServerSession(
-    ctx.req,
-    ctx.res,
-    authOptions
-  );
-
-  if (!session) {
+  if (!token) {
+    const redirect = getServerRedirectUrl(ctx);
     return {
       redirect,
     };
   }
 
-  const user = await prisma.user.findUnique({
-    where: {
-      email: session.user.email,
-    },
-  });
-  const notes = await prisma.note.findMany({
-    where: {
-      user_id: user.id,
-    },
-    select: {
-      id: true,
-      title: true,
-      slug: true,
-      content: true,
-    },
-  });
+  const notes = await getNotes(token.sub);
 
   return {
     props: { notes },
