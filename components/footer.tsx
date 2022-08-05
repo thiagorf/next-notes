@@ -18,7 +18,7 @@ export const Footer = () => {
         Made with <AiFillHeart className="inline text-red-500" /> by thiagorf
       </p>
       <div>
-        <p className="text-sm">Developer Social networks</p>
+        <p className="text-sm">Developer Social Medias</p>
         <div className="flex justify-evenly">
           {socialMedias.map(({ socialMedia, Icon }, index) => (
             <p className=" text-sm align-middle" key={index}>
