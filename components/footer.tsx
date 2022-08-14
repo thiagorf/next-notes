@@ -15,10 +15,10 @@ export const Footer = () => {
   return (
     <footer className="flex flex-col items-center justify-center h-36  border -mt-36">
       <p className="mb-2">
-        Make with <AiFillHeart className="inline text-red-500" /> by thiagorf
+        Made with <AiFillHeart className="inline text-red-500" /> by thiagorf
       </p>
       <div>
-        <p className="text-sm">Developer Social networks</p>
+        <p className="text-sm">Developer Social Medias</p>
         <div className="flex justify-evenly">
           {socialMedias.map(({ socialMedia, Icon }, index) => (
             <p className=" text-sm align-middle" key={index}>
