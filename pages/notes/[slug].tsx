@@ -1,7 +1,6 @@
 import { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import { getToken } from "next-auth/jwt";
 import Head from "next/head";
-import { useRouter } from "next/router";
 import getServerRedirectUrl from "../../lib/redirect";
 import { getNote, INotes } from "../../services/notes";
 
