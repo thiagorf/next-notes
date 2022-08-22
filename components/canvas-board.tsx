@@ -1,5 +1,6 @@
 import { MouseEvent, useLayoutEffect, useRef, useState } from "react";
 import rough from "roughjs/bundled/rough.cjs.js";
+import { Drawable } from "roughjs/bin/core";
 ///bundled/rough.cjs"
 
 type GridLocation = {
@@ -17,7 +18,7 @@ type CanvasElement = {
 };
 
 interface CanvasObject extends CanvasElement {
-  roughElement: any;
+  roughElement: Drawable;
 }
 
 const generator = rough.generator();
@@ -73,11 +74,8 @@ export const CanvasBoard = () => {
 
     const roughCanvas = rough.canvas(canvas);
 
-    const x = generator.rectangle(10, 10, 100, 20);
-
-    roughCanvas.draw(x);
-
     elements.forEach(({ roughElement }) => roughCanvas.draw(roughElement));
+    console.log(elements);
   }, [elements]);
 
   const updateElement = ({ id, x1, y1, x2, y2, type }: CanvasElement) => {
@@ -110,7 +108,6 @@ export const CanvasBoard = () => {
         y2: clientY,
         type: tool,
       });
-      console.log(element);
 
       setElements((prevState) => [...prevState, element]);
       setAction("drawing");
