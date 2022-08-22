@@ -1,4 +1,4 @@
-import { MouseEvent, useLayoutEffect, useState } from "react";
+import { MouseEvent, useLayoutEffect, useRef, useState } from "react";
 import rough from "roughjs/bundled/rough.cjs.js";
 ///bundled/rough.cjs"
 
@@ -64,12 +64,18 @@ export const CanvasBoard = () => {
   const [action, setAction] = useState("none");
   const [tool, setTool] = useState<"line" | "rectangle" | "selection">("line");
 
+  const canvasRef = useRef<HTMLCanvasElement>();
+
   useLayoutEffect(() => {
-    const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+    const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
     context.clearRect(0, 0, canvas.width, canvas.height);
 
     const roughCanvas = rough.canvas(canvas);
+
+    const x = generator.rectangle(10, 10, 100, 20);
+
+    roughCanvas.draw(x);
 
     elements.forEach(({ roughElement }) => roughCanvas.draw(roughElement));
   }, [elements]);
@@ -86,7 +92,7 @@ export const CanvasBoard = () => {
   const handleMouseDown = (event: MouseEvent) => {
     const { clientX, clientY } = event;
 
-    if (tool == "selection") {
+    if (tool === "selection") {
       const element = getElementByPosition(clientX, clientY, elements);
       if (element) {
         setAction("moving");
@@ -94,6 +100,8 @@ export const CanvasBoard = () => {
       }
     } else {
       const id = elements.length;
+      console.log(clientX, clientY);
+
       const element = createElement({
         id,
         x1: clientX,
@@ -102,6 +110,8 @@ export const CanvasBoard = () => {
         y2: clientY,
         type: tool,
       });
+      console.log(element);
+
       setElements((prevState) => [...prevState, element]);
       setAction("drawing");
     }
@@ -113,6 +123,8 @@ export const CanvasBoard = () => {
 
       const index = elements.length - 1;
       const { x, y } = elements[index];
+
+      console.log("mouse-move");
 
       updateElement({
         id: index,
@@ -136,7 +148,7 @@ export const CanvasBoard = () => {
       <div>
         <input
           type="radio"
-          id="selextion"
+          id="selection"
           checked={tool === "selection"}
           onChange={() => setTool("selection")}
         />
@@ -167,6 +179,7 @@ export const CanvasBoard = () => {
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
+          ref={canvasRef}
         >
           your browser does not support the canvas element
         </canvas>
