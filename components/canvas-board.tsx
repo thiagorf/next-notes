@@ -17,9 +17,9 @@ type CanvasElement = {
   type: "line" | "rectangle" | "selection";
 };
 
-interface CanvasObject extends CanvasElement {
+type CanvasObject = CanvasElement & {
   roughElement: Drawable;
-}
+};
 
 const generator = rough.generator();
 
@@ -60,7 +60,7 @@ const getElementByPosition = (x: number, y: number, elements: any[]) => {
 };
 
 export const CanvasBoard = () => {
-  const [elements, setElements] = useState([]);
+  const [elements, setElements] = useState<CanvasObject[]>([]);
   const [selectedElement, setSelectedElement] = useState(null);
   const [action, setAction] = useState("none");
   const [tool, setTool] = useState<"line" | "rectangle" | "selection">("line");
@@ -119,14 +119,14 @@ export const CanvasBoard = () => {
       const { clientX, clientY } = event;
 
       const index = elements.length - 1;
-      const { x, y } = elements[index];
+      const { x1, y1 } = elements[index];
 
       console.log("mouse-move");
 
       updateElement({
         id: index,
-        x1: x,
-        y1: y,
+        x1,
+        y1,
         x2: clientX,
         y2: clientY,
         type: tool,
