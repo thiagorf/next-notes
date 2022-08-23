@@ -45,18 +45,28 @@ const nearPoint = (
 const positionWithinElement = (x: number, y: number, element: any) => {
   const { type, x1, x2, y1, y2 } = element;
 
+  console.log("cursor", x, y);
+  console.log("element", x1, y1);
+
   if (type === "rectangle") {
     const topLeft = nearPoint(x, y, x1, y1, "tl");
+    const topRight = nearPoint(x, y, x2, y1, "tr");
+    const bottomLeft = nearPoint(x, y, x1, y2, "bl");
+    const bottomRight = nearPoint(x, y, x2, y2, "br");
+    const inside = x >= x1 && x <= x2 && y >= y1 && y <= y2 ? "inside" : null;
 
-    return x >= x1 && x <= x2 && y >= y1 && y <= y2 ? "inside" : null;
+    return topLeft || topRight || bottomLeft || bottomRight || inside;
   } else {
     const a = { x: x1, y: y1 };
     const b = { x: x2, y: y2 };
     const c = { x, y };
 
     const offset = distance(a, b) - (distance(a, c) + distance(b, c));
+    const start = nearPoint(x, y, x1, y1, "start");
+    const end = nearPoint(x, y, x2, y2, "end");
+    const inside = Math.abs(offset) < 1 ? "inside" : null;
 
-    return Math.abs(offset) < 1 ? "inside" : null;
+    return start || end || inside;
   }
 };
 
@@ -64,7 +74,12 @@ const distance = (a: GridLocation, b: GridLocation) =>
   Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
 
 const getElementByPosition = (x: number, y: number, elements: any[]) => {
-  return elements.find((element) => positionWithinElement(x, y, element));
+  return elements
+    .map((element) => ({
+      ...element,
+      position: positionWithinElement(x, y, element),
+    }))
+    .find((element) => element.position !== null);
 };
 
 const adjustElementCoordenates = (element: CanvasObject) => {
@@ -83,6 +98,21 @@ const adjustElementCoordenates = (element: CanvasObject) => {
     } else {
       return { x1: x2, y1: y2, x2: x1, y2: y1 };
     }
+  }
+};
+
+const cursorForPosition = (position: string) => {
+  switch (position) {
+    case "tl":
+    case "br":
+    case "start":
+    case "end":
+      return "nwse-resize";
+    case "tr":
+    case "bl":
+      return "nesw-resize";
+    default:
+      return "move";
   }
 };
 
@@ -146,12 +176,10 @@ export const CanvasBoard = () => {
     const { clientX, clientY } = event;
 
     if (tool === "selection") {
-      event.currentTarget.style.cursor = getElementByPosition(
-        clientX,
-        clientY,
-        elements
-      )
-        ? "move"
+      const element = getElementByPosition(clientX, clientY, elements);
+
+      event.currentTarget.style.cursor = element
+        ? cursorForPosition(element.position)
         : "default";
     }
 

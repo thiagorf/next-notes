@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { CanvasBoard } from "../components/canvas-board";
+// testing canvas
 import { CanvasTest } from "../components/canvas/canvas-test";
 
 function Canvas() {
@@ -14,8 +15,8 @@ function Canvas() {
   }
 
   return (
-    //<CanvasBoard />
-    <CanvasTest />
+    <CanvasBoard />
+    //<CanvasTest />
   );
 }
 
