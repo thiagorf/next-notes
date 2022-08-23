@@ -1,10 +1,4 @@
-import {
-  HTMLAttributeAnchorTarget,
-  MouseEvent,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { MouseEvent, useLayoutEffect, useRef, useState } from "react";
 import rough from "roughjs/bundled/rough.cjs.js";
 import { Drawable } from "roughjs/bin/core";
 ///bundled/rough.cjs"
@@ -38,15 +32,23 @@ const createElement = ({ id, x1, y1, x2, y2, type }: CanvasElement) => {
   return { id, x1, y1, x2, y2, type, roughElement };
 };
 
-const isWithinElement = (x: number, y: number, element: any) => {
+const nearPoint = (
+  x: number,
+  y: number,
+  x1: number,
+  y1: number,
+  vertex: string
+) => {
+  return Math.abs(x - x1) < 5 && Math.abs(y - y1) < 5 ? vertex : null;
+};
+
+const positionWithinElement = (x: number, y: number, element: any) => {
   const { type, x1, x2, y1, y2 } = element;
 
   if (type === "rectangle") {
-    const minX = Math.min(x1, x2);
-    const maxX = Math.max(x1, x2);
-    const minY = Math.min(y1, y2);
-    const maxY = Math.max(y1, y2);
-    return x >= minX && x <= maxX && y >= minY && y <= maxY;
+    const topLeft = nearPoint(x, y, x1, y1, "tl");
+
+    return x >= x1 && x <= x2 && y >= y1 && y <= y2 ? "inside" : null;
   } else {
     const a = { x: x1, y: y1 };
     const b = { x: x2, y: y2 };
@@ -54,7 +56,7 @@ const isWithinElement = (x: number, y: number, element: any) => {
 
     const offset = distance(a, b) - (distance(a, c) + distance(b, c));
 
-    return Math.abs(offset) < 1;
+    return Math.abs(offset) < 1 ? "inside" : null;
   }
 };
 
@@ -62,7 +64,26 @@ const distance = (a: GridLocation, b: GridLocation) =>
   Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
 
 const getElementByPosition = (x: number, y: number, elements: any[]) => {
-  return elements.find((element) => isWithinElement(x, y, element));
+  return elements.find((element) => positionWithinElement(x, y, element));
+};
+
+const adjustElementCoordenates = (element: CanvasObject) => {
+  const { type, x1, y1, x2, y2 } = element;
+
+  if (type === "rectangle") {
+    const minX = Math.min(x1, x2);
+    const maxX = Math.max(x1, x2);
+    const minY = Math.min(y1, y2);
+    const maxY = Math.max(y1, y2);
+
+    return { x1: minX, y1: minY, x2: maxX, y2: maxY };
+  } else {
+    if (x1 < x2 || (x1 === x2 && y1 < y2)) {
+      return { x1, y1, x2, y2 };
+    } else {
+      return { x1: x2, y1: y2, x2: x1, y2: y1 };
+    }
+  }
 };
 
 export const CanvasBoard = () => {
@@ -164,6 +185,12 @@ export const CanvasBoard = () => {
     }
   };
   const handleMouseUp = () => {
+    const index = elements.length - 1;
+    const { id, type } = elements[index];
+    if (action === "drawing") {
+      const { x1, y1, x2, y2 } = adjustElementCoordenates(elements[index]);
+      updateElement({ id, x1, y1, x2, y2, type });
+    }
     setAction("none");
     setSelectedElement(null);
   };
