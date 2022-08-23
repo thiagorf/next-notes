@@ -14,5 +14,7 @@ export const useDraw = (): UseDraw => {
     return { x1, y1, x2, y2, roughElement };
   };
 
+  //update only x2, y2 of an element
+
   return { createElement };
 };
