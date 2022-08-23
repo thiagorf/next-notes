@@ -1,4 +1,10 @@
-import { MouseEvent, useLayoutEffect, useRef, useState } from "react";
+import {
+  HTMLAttributeAnchorTarget,
+  MouseEvent,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import rough from "roughjs/bundled/rough.cjs.js";
 import { Drawable } from "roughjs/bin/core";
 ///bundled/rough.cjs"
@@ -56,7 +62,7 @@ const distance = (a: GridLocation, b: GridLocation) =>
   Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
 
 const getElementByPosition = (x: number, y: number, elements: any[]) => {
-  return elements.map((element) => isWithinElement(x, y, element));
+  return elements.find((element) => isWithinElement(x, y, element));
 };
 
 export const CanvasBoard = () => {
@@ -75,7 +81,6 @@ export const CanvasBoard = () => {
     const roughCanvas = rough.canvas(canvas);
 
     elements.forEach(({ roughElement }) => roughCanvas.draw(roughElement));
-    console.log(elements);
   }, [elements]);
 
   const updateElement = ({ id, x1, y1, x2, y2, type }: CanvasElement) => {
@@ -93,12 +98,14 @@ export const CanvasBoard = () => {
     if (tool === "selection") {
       const element = getElementByPosition(clientX, clientY, elements);
       if (element) {
+        const offsetX = clientX - element.x1;
+        const offsetY = clientY - element.y1;
+
         setAction("moving");
-        setSelectedElement(element);
+        setSelectedElement({ ...element, offsetX, offsetY });
       }
     } else {
       const id = elements.length;
-      console.log(clientX, clientY);
 
       const element = createElement({
         id,
@@ -114,14 +121,22 @@ export const CanvasBoard = () => {
     }
   };
 
-  const handleMouseMove = (event: MouseEvent) => {
-    if (action === "drawing") {
-      const { clientX, clientY } = event;
+  const handleMouseMove = (event: MouseEvent<HTMLCanvasElement>) => {
+    const { clientX, clientY } = event;
 
+    if (tool === "selection") {
+      event.currentTarget.style.cursor = getElementByPosition(
+        clientX,
+        clientY,
+        elements
+      )
+        ? "move"
+        : "default";
+    }
+
+    if (action === "drawing") {
       const index = elements.length - 1;
       const { x1, y1 } = elements[index];
-
-      console.log("mouse-move");
 
       updateElement({
         id: index,
@@ -132,7 +147,20 @@ export const CanvasBoard = () => {
         type: tool,
       });
     } else if (action === "moving") {
-      const { id } = selectedElement;
+      const { id, x1, y1, x2, y2, type, offsetX, offsetY } = selectedElement;
+      const width = x2 - x1;
+      const height = y2 - y1;
+      const newX1 = clientX - offsetX;
+      const newY1 = clientY - offsetY;
+
+      updateElement({
+        id,
+        x1: newX1,
+        y1: newY1,
+        x2: newX1 + width,
+        y2: newY1 + height,
+        type,
+      });
     }
   };
   const handleMouseUp = () => {
