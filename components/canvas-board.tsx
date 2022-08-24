@@ -21,9 +21,20 @@ type CanvasObject = CanvasElement & {
   roughElement: Drawable;
 };
 
+type CanvasObjectPosition = CanvasObject & {
+  poisition: "tr" | "tl" | "br" | "bl" | "start" | "end" | "inside";
+};
+
+type SelectedElement = CanvasElement & {
+  offsetX?: number;
+  offsetY?: number;
+};
+
 const generator = rough.generator();
 
 const createElement = ({ id, x1, y1, x2, y2, type }: CanvasElement) => {
+  console.log(type);
+
   const roughElement =
     type === "line"
       ? generator.line(x1, y1, x2, y2)
@@ -42,11 +53,8 @@ const nearPoint = (
   return Math.abs(x - x1) < 5 && Math.abs(y - y1) < 5 ? vertex : null;
 };
 
-const positionWithinElement = (x: number, y: number, element: any) => {
+const positionWithinElement = (x: number, y: number, element: CanvasObject) => {
   const { type, x1, x2, y1, y2 } = element;
-
-  console.log("cursor", x, y);
-  console.log("element", x1, y1);
 
   if (type === "rectangle") {
     const topLeft = nearPoint(x, y, x1, y1, "tl");
@@ -73,7 +81,11 @@ const positionWithinElement = (x: number, y: number, element: any) => {
 const distance = (a: GridLocation, b: GridLocation) =>
   Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
 
-const getElementByPosition = (x: number, y: number, elements: any[]) => {
+const getElementByPosition = (
+  x: number,
+  y: number,
+  elements: CanvasObject[]
+) => {
   return elements
     .map((element) => ({
       ...element,
@@ -118,7 +130,8 @@ const cursorForPosition = (position: string) => {
 
 export const CanvasBoard = () => {
   const [elements, setElements] = useState<CanvasObject[]>([]);
-  const [selectedElement, setSelectedElement] = useState(null);
+  const [selectedElement, setSelectedElement] =
+    useState<SelectedElement | null>(null);
   const [action, setAction] = useState("none");
   const [tool, setTool] = useState<"line" | "rectangle" | "selection">("line");
 
@@ -135,10 +148,8 @@ export const CanvasBoard = () => {
   }, [elements]);
 
   const updateElement = ({ id, x1, y1, x2, y2, type }: CanvasElement) => {
-    const updatedElement = createElement({ id, x1, y1, x2, y2, type });
-
     const elementsCopy = [...elements];
-    elementsCopy[id] = updatedElement;
+    elementsCopy[id] = createElement({ id, x1, y1, x2, y2, type });
 
     setElements(elementsCopy);
   };
@@ -178,7 +189,7 @@ export const CanvasBoard = () => {
     if (tool === "selection") {
       const element = getElementByPosition(clientX, clientY, elements);
 
-      event.currentTarget.style.cursor = element
+      (event.target as HTMLElement).style.cursor = element
         ? cursorForPosition(element.position)
         : "default";
     }
@@ -216,7 +227,9 @@ export const CanvasBoard = () => {
     const index = elements.length - 1;
     const { id, type } = elements[index];
     if (action === "drawing") {
-      const { x1, y1, x2, y2 } = adjustElementCoordenates(elements[index]);
+      const element = adjustElementCoordenates(elements[index]);
+      const { x1, y1, x2, y2 } = element;
+
       updateElement({ id, x1, y1, x2, y2, type });
     }
     setAction("none");
@@ -226,29 +239,31 @@ export const CanvasBoard = () => {
   return (
     <>
       <div>
-        <input
-          type="radio"
-          id="selection"
-          checked={tool === "selection"}
-          onChange={() => setTool("selection")}
-        />
-        <label htmlFor="selection">Selection</label>
+        <div className="absolute top-0 bg-gray-300">
+          <input
+            type="radio"
+            id="selection"
+            checked={tool === "selection"}
+            onChange={() => setTool("selection")}
+          />
+          <label htmlFor="selection">Selection</label>
 
-        <input
-          type="radio"
-          id="line"
-          checked={tool === "line"}
-          onChange={() => setTool("line")}
-        />
-        <label htmlFor="line">Line</label>
+          <input
+            type="radio"
+            id="line"
+            checked={tool === "line"}
+            onChange={() => setTool("line")}
+          />
+          <label htmlFor="line">Line</label>
 
-        <input
-          type="radio"
-          id="rectangle"
-          checked={tool === "rectangle"}
-          onChange={() => setTool("rectangle")}
-        />
-        <label htmlFor="rectangle">Rectangle</label>
+          <input
+            type="radio"
+            id="rectangle"
+            checked={tool === "rectangle"}
+            onChange={() => setTool("rectangle")}
+          />
+          <label htmlFor="rectangle">Rectangle</label>
+        </div>
       </div>
       <div>
         <canvas
