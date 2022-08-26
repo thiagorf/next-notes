@@ -9,6 +9,7 @@ import {
 } from "react";
 import rough from "roughjs/bundled/rough.cjs.js";
 import { Drawable } from "roughjs/bin/core";
+import { renderRectangleHandles } from "./canvas/resize-handles";
 ///bundled/rough.cjs"
 
 type CanvasActions = "none" | "drawing" | "moving" | "resizing";
@@ -227,7 +228,19 @@ export const CanvasBoard = () => {
 
     const roughCanvas = rough.canvas(canvas);
 
-    elements.forEach(({ roughElement }) => roughCanvas.draw(roughElement));
+    elements.forEach((element) => {
+      if (
+        action !== "drawing" &&
+        selectedElement &&
+        element.id === selectedElement.id
+      ) {
+        const { x1, y1, x2, y2 } = element;
+        //const handler = generator.rectangle(x1, y1, 10, 10);
+        //roughCanvas.draw(handler);
+        renderRectangleHandles(x1, y1, x2, y2, context);
+      }
+      roughCanvas.draw(element.roughElement);
+    });
   }, [elements]);
 
   useEffect(() => {
