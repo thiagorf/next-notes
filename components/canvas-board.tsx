@@ -1,4 +1,12 @@
-import { MouseEvent, useLayoutEffect, useRef, useState } from "react";
+import {
+  Dispatch,
+  MouseEvent,
+  SetStateAction,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import rough from "roughjs/bundled/rough.cjs.js";
 import { Drawable } from "roughjs/bin/core";
 ///bundled/rough.cjs"
@@ -164,8 +172,47 @@ const resizedCoordinates = ({
   }
 };
 
+const useHistory = (
+  initialState: []
+): {
+  elements: CanvasObject[];
+  setState: (
+    action: CanvasObject[] | ((prevState: CanvasObject[]) => CanvasObject[]),
+    overwrite?: boolean
+  ) => void;
+  undo: () => void;
+  redo: () => void;
+} => {
+  const [index, setIndex] = useState(0);
+  const [history, setHistory] = useState<CanvasObject[][]>([initialState]);
+  const setState = (
+    action: CanvasObject[] | ((prevState: CanvasObject[]) => CanvasObject[]),
+    overwrite = false
+  ) => {
+    const newState =
+      typeof action === "function" ? action(history[index]) : action;
+
+    if (overwrite) {
+      const historyCopy = [...history];
+      historyCopy[index] = newState;
+      setHistory(historyCopy);
+    } else {
+      const updatedState = [...history].slice(0, index + 1);
+      setHistory((prevState) => [...updatedState, newState]);
+      setIndex((prevState) => prevState + 1);
+    }
+  };
+
+  const undo = () => index > 0 && setIndex((prevState) => prevState - 1);
+  const redo = () =>
+    index < history.length - 1 && setIndex((prevState) => prevState + 1);
+
+  const elements = history[index];
+  return { elements, setState, undo, redo };
+};
+
 export const CanvasBoard = () => {
-  const [elements, setElements] = useState<CanvasObject[]>([]);
+  const { elements, setState: setElements, undo, redo } = useHistory([]);
   const [selectedElement, setSelectedElement] =
     useState<SelectedElement | null>(null);
   const [action, setAction] = useState<CanvasActions>("none");
@@ -183,11 +230,29 @@ export const CanvasBoard = () => {
     elements.forEach(({ roughElement }) => roughCanvas.draw(roughElement));
   }, [elements]);
 
+  useEffect(() => {
+    const undoRedoFunction = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "z") {
+        undo();
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === "y") {
+        redo();
+      }
+    };
+
+    document.addEventListener("keydown", undoRedoFunction);
+
+    return () => {
+      document.removeEventListener("keydown", undoRedoFunction);
+    };
+  }, [undo, redo]);
+
   const updateElement = ({ id, x1, y1, x2, y2, type }: CanvasElement) => {
     const elementsCopy = [...elements];
     elementsCopy[id] = createElement({ id, x1, y1, x2, y2, type });
 
-    setElements(elementsCopy);
+    //true
+    setElements(elementsCopy, true);
   };
 
   const handleMouseDown = (event: MouseEvent) => {
@@ -199,6 +264,7 @@ export const CanvasBoard = () => {
         const offsetX = clientX - element.x1;
         const offsetY = clientY - element.y1;
         setSelectedElement({ ...element, offsetX, offsetY });
+        setElements((prevState) => prevState);
 
         if (element.position === "inside") {
           setAction("moving");
@@ -317,6 +383,10 @@ export const CanvasBoard = () => {
           />
           <label htmlFor="rectangle">Rectangle</label>
         </div>
+      </div>
+      <div className="absolute p-2 bottom-2 left-5">
+        <button onClick={undo}>Undo</button>
+        <button onClick={redo}>Redo</button>
       </div>
       <div>
         <canvas
