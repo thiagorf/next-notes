@@ -3,6 +3,10 @@ import rough from "roughjs/bundled/rough.cjs.js";
 import { Drawable } from "roughjs/bin/core";
 ///bundled/rough.cjs"
 
+type CanvasActions = "none" | "drawing" | "moving" | "resizing";
+
+type ObjectPositions = "tr" | "tl" | "br" | "bl" | "start" | "end" | "inside";
+
 type GridLocation = {
   x: number;
   y: number;
@@ -22,7 +26,7 @@ type CanvasObject = CanvasElement & {
 };
 
 type CanvasObjectPosition = CanvasObject & {
-  poisition: "tr" | "tl" | "br" | "bl" | "start" | "end" | "inside";
+  position: ObjectPositions;
 };
 
 type SelectedElement = CanvasElement & {
@@ -33,8 +37,6 @@ type SelectedElement = CanvasElement & {
 const generator = rough.generator();
 
 const createElement = ({ id, x1, y1, x2, y2, type }: CanvasElement) => {
-  console.log(type);
-
   const roughElement =
     type === "line"
       ? generator.line(x1, y1, x2, y2)
@@ -128,11 +130,45 @@ const cursorForPosition = (position: string) => {
   }
 };
 
+const resizedCoordinates = ({
+  x,
+  y,
+  position,
+  coordinates,
+}: {
+  x: number;
+  y: number;
+  position: ObjectPositions;
+  coordinates: {
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+  };
+}) => {
+  const { x1, y1, x2, y2 } = coordinates;
+
+  switch (position) {
+    case "tl":
+    case "start":
+      return { x1: x, y1: y, x2, y2 };
+    case "tr":
+      return { x1, y1: y, x2: x, y2 };
+    case "bl":
+      return { x1: x, y1, x2, y2: y };
+    case "br":
+    case "end":
+      return { x1, y1, x2: x, y2: y };
+    default:
+      return null;
+  }
+};
+
 export const CanvasBoard = () => {
   const [elements, setElements] = useState<CanvasObject[]>([]);
   const [selectedElement, setSelectedElement] =
     useState<SelectedElement | null>(null);
-  const [action, setAction] = useState("none");
+  const [action, setAction] = useState<CanvasActions>("none");
   const [tool, setTool] = useState<"line" | "rectangle" | "selection">("line");
 
   const canvasRef = useRef<HTMLCanvasElement>();
@@ -162,9 +198,13 @@ export const CanvasBoard = () => {
       if (element) {
         const offsetX = clientX - element.x1;
         const offsetY = clientY - element.y1;
-
-        setAction("moving");
         setSelectedElement({ ...element, offsetX, offsetY });
+
+        if (element.position === "inside") {
+          setAction("moving");
+        } else {
+          setAction("resizing");
+        }
       }
     } else {
       const id = elements.length;
@@ -179,6 +219,7 @@ export const CanvasBoard = () => {
       });
 
       setElements((prevState) => [...prevState, element]);
+      setSelectedElement(element);
       setAction("drawing");
     }
   };
@@ -221,16 +262,28 @@ export const CanvasBoard = () => {
         y2: newY1 + height,
         type,
       });
+    } else if (action === "resizing") {
+      const { id, type, position, ...coordinates } =
+        selectedElement as CanvasObjectPosition;
+      const { x1, y1, x2, y2 } = resizedCoordinates({
+        x: clientX,
+        y: clientY,
+        position,
+        coordinates,
+      });
+      updateElement({ id, x1, y1, x2, y2, type });
     }
   };
   const handleMouseUp = () => {
-    const index = elements.length - 1;
-    const { id, type } = elements[index];
-    if (action === "drawing") {
-      const element = adjustElementCoordenates(elements[index]);
-      const { x1, y1, x2, y2 } = element;
+    if (selectedElement) {
+      const index = selectedElement.id;
+      const { id, type } = elements[index];
+      if (action === "drawing" || action === "resizing") {
+        const element = adjustElementCoordenates(elements[index]);
+        const { x1, y1, x2, y2 } = element;
 
-      updateElement({ id, x1, y1, x2, y2, type });
+        updateElement({ id, x1, y1, x2, y2, type });
+      }
     }
     setAction("none");
     setSelectedElement(null);
